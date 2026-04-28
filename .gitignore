@@ -1,0 +1,26 @@
+# Carpetes temporals i generades per Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]serSettings/
+
+# Fitxers de la solució (Visual Studio) que es generen sols
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.db
+
+# Fitxers de sistema
+.DS_Store
+Thumbs.db
