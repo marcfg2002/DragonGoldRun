@@ -737,7 +737,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &265152678
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -756,6 +756,7 @@ MonoBehaviour:
   limiteY: {x: -3, y: 1}
   textoMonedas: {fileID: 177398482}
   monedas: 0
+  activo: 0
 --- !u!4 &265152679
 Transform:
   m_ObjectHideFlags: 0
@@ -1718,7 +1719,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!95 &895859940
 Animator:
   serializedVersion: 5
@@ -1828,6 +1829,7 @@ MonoBehaviour:
   frecuencia: 2
   fireballPrefab: {fileID: 3474218732304689228, guid: 0c0b8a1bc75bf1c4187ec7531a1659a3, type: 3}
   puntoDisparo: {fileID: 2016702652}
+  activo: 0
 --- !u!1 &958439842
 GameObject:
   m_ObjectHideFlags: 0
@@ -2314,7 +2316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d65788027cc4a045a13f7197d67ddac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  port: 5703
+  port: 5701
   botoHost: {fileID: 553244427}
   botoClient: {fileID: 958439842}
   inputIP: {fileID: 2138757240}
@@ -2757,7 +2759,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1960247211
 MonoBehaviour:
   m_ObjectHideFlags: 0

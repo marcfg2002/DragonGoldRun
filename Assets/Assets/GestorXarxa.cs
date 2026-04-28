@@ -23,6 +23,8 @@ public class GestorXarxa : MonoBehaviour
     public GameObject prefabJugador;
     private GameObject jugadorRival;
     private ScriptPersonaje meuPersonatge;
+    
+    private Vector3 posicioDestiRival;
 
     void Awake() { Instance = this; }
 
@@ -30,10 +32,7 @@ public class GestorXarxa : MonoBehaviour
     {
         driver = NetworkDriver.Create();
         var endpoint = NetworkEndpoint.AnyIpv4.WithPort(port);
-        if (driver.Bind(endpoint) != 0) 
-        {
-            Debug.LogError("Error: Port " + port + " ocupat.");
-        } 
+        if (driver.Bind(endpoint) != 0) Debug.LogError("Error: Port ocupat.");
         else 
         {
             driver.Listen();
@@ -46,21 +45,15 @@ public class GestorXarxa : MonoBehaviour
 
     public void IniciarClient()
     {
-        if (string.IsNullOrEmpty(inputIP.text))
-        {
-            Debug.LogError("ERROR: Has d'escriure una IP per connectar-te!");
-            return; 
-        }
+        string ipNeta = inputIP.text.Replace("\u200B", "").Trim();
+        if (string.IsNullOrEmpty(ipNeta)) return; 
 
-        string ipDesti = inputIP.text; 
         driver = NetworkDriver.Create();
         conexio = default(NetworkConnection);
-        
-        var endpoint = NetworkEndpoint.Parse(ipDesti, port);
+        var endpoint = NetworkEndpoint.Parse(ipNeta, port);
         conexio = driver.Connect(endpoint);
-        
         esServidor = false;
-        Debug.Log("Intentant connectar a " + ipDesti + "...");
+        Debug.Log("Intentant connectar a '" + ipNeta + "'...");
     }
 
     void AmagarBotons()
@@ -68,6 +61,18 @@ public class GestorXarxa : MonoBehaviour
         if (botoHost != null) botoHost.SetActive(false);
         if (botoClient != null) botoClient.SetActive(false);
         if (inputIP != null) inputIP.gameObject.SetActive(false);
+    }
+
+    void ActivarMundo()
+    {
+        MonedasManager mm = FindObjectOfType<MonedasManager>();
+        if (mm != null) mm.Activar();
+
+        GeneradorEnemigo ge = FindObjectOfType<GeneradorEnemigo>();
+        if (ge != null) ge.Activar();
+
+        DragonFly[] dragons = FindObjectsOfType<DragonFly>();
+        foreach(DragonFly d in dragons) d.activo = true;
     }
 
     void Update()
@@ -83,6 +88,7 @@ public class GestorXarxa : MonoBehaviour
                 conexio = c;
                 estaConnectat = true;
                 Debug.Log("RIVAL CONNECTAT!");
+                ActivarMundo();
             }
         }
 
@@ -97,6 +103,7 @@ public class GestorXarxa : MonoBehaviour
                 {
                     InstanciarMeuJugador();
                     AmagarBotons(); 
+                    ActivarMundo();
                 }
             }
             else if (cmd == NetworkEvent.Type.Data)
@@ -106,20 +113,20 @@ public class GestorXarxa : MonoBehaviour
                 ProcessarMissatge(Encoding.UTF8.GetString(rawData.ToArray()));
                 rawData.Dispose();
             }
-            else if (cmd == NetworkEvent.Type.Disconnect)
-            {
-                Debug.Log("Connexió perduda.");
-                estaConnectat = false;
-            }
+            else if (cmd == NetworkEvent.Type.Disconnect) estaConnectat = false;
         }
 
         if (estaConnectat && conexio != default(NetworkConnection) && meuPersonatge != null)
         {
-            string dades = "POS|" + meuPersonatge.transform.position.x + "|" + 
-                           meuPersonatge.transform.position.y + "|" + 
-                           meuPersonatge.GetComponent<SpriteRenderer>().flipX;
+            Animator anim = meuPersonatge.GetComponent<Animator>();
+            string dades = "POS|" + meuPersonatge.transform.position.x + "|" + meuPersonatge.transform.position.y + "|" + 
+                           meuPersonatge.GetComponent<SpriteRenderer>().flipX + "|" +
+                           anim.GetFloat("Speed") + "|" + anim.GetBool("Grounded");
             EnviarDades(dades);
         }
+
+        if (jugadorRival != null)
+            jugadorRival.transform.position = Vector3.Lerp(jugadorRival.transform.position, posicioDestiRival, Time.deltaTime * 15f);
     }
 
     void InstanciarMeuJugador()
@@ -127,7 +134,6 @@ public class GestorXarxa : MonoBehaviour
         GameObject obj = Instantiate(prefabJugador, new Vector3(-5, 0, 0), Quaternion.identity);
         meuPersonatge = obj.GetComponent<ScriptPersonaje>();
         meuPersonatge.esLocal = true;
-        
         obj.GetComponent<SpriteRenderer>().sortingOrder = 10;
     }
 
@@ -150,21 +156,46 @@ public class GestorXarxa : MonoBehaviour
             {
                 jugadorRival = Instantiate(prefabJugador, Vector3.zero, Quaternion.identity);
                 jugadorRival.GetComponent<ScriptPersonaje>().esLocal = false;
-                
                 jugadorRival.GetComponent<SpriteRenderer>().sortingOrder = 10;
+                Rigidbody2D rb = jugadorRival.GetComponent<Rigidbody2D>();
+                if (rb != null) rb.simulated = false;
             }
-            jugadorRival.transform.position = new Vector3(float.Parse(d[1]), float.Parse(d[2]), 0);
+            
+            posicioDestiRival = new Vector3(float.Parse(d[1]), float.Parse(d[2]), 0);
             jugadorRival.GetComponent<SpriteRenderer>().flipX = bool.Parse(d[3]);
+
+            if (d.Length >= 6) 
+            {
+                Animator animRival = jugadorRival.GetComponent<Animator>();
+                if (animRival != null)
+                {
+                    animRival.SetFloat("Speed", float.Parse(d[4]));
+                    animRival.SetBool("Grounded", bool.Parse(d[5]));
+                }
+            }
+        }
+        else if (d[0] == "COIN") 
+        {
+            float x = float.Parse(d[1]);
+            float y = float.Parse(d[2]);
+            Vector2 posMonedaRival = new Vector2(x, y);
+
+            GameObject[] monedas = GameObject.FindGameObjectsWithTag("Moneda");
+            foreach (GameObject m in monedas)
+            {
+                if (Vector2.Distance(m.transform.position, posMonedaRival) < 1f)
+                {
+                    Destroy(m);
+                    break; 
+                }
+            }
         }
         else if (d[0] == "VICTORIA")
         {
-            Debug.Log("Has perdut la cursa!");
+            Debug.Log("Has perdut la cursa! El rival ha arribat a 40!");
             meuPersonatge.MorirDefinitivo();
         }
     }
 
-    void OnDestroy()
-    {
-        if (driver.IsCreated) driver.Dispose();
-    }
+    void OnDestroy() { if (driver.IsCreated) driver.Dispose(); }
 }

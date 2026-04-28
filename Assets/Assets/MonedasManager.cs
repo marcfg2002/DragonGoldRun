@@ -11,17 +11,26 @@ public class MonedasManager : MonoBehaviour
 
     [Header("Contador")]
     public TMP_Text textoMonedas;
-
     public int monedas = 0;
+
+    public bool activo = false;
+    private int oleada = 0;
 
     void Start()
     {
-        GenerarMonedas();
         ActualizarTexto();
+    }
+
+    public void Activar()
+    {
+        activo = true;
+        GenerarMonedas();
     }
 
     void Update()
     {
+        if (!activo) return;
+
         if (GameObject.FindGameObjectsWithTag("Moneda").Length == 0)
         {
             GenerarMonedas();
@@ -30,6 +39,9 @@ public class MonedasManager : MonoBehaviour
 
     void GenerarMonedas()
     {
+        oleada++;
+        Random.InitState(oleada * 12345);
+
         for (int i = 0; i < cantidadMonedas; i++)
         {
             float x = Random.Range(limiteX.x, limiteX.y);
@@ -38,36 +50,28 @@ public class MonedasManager : MonoBehaviour
 
             GameObject moneda = Instantiate(prefabMoneda, posicion, Quaternion.identity);
             moneda.tag = "Moneda";
-
             moneda.AddComponent<MonedaSimple>().manager = this;
         }
     }
 
-    public void SumarMoneda()
+    public void SumarMonedaLocal()
     {
         monedas++;
         ActualizarTexto();
 
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.VerificarRecordMonedas(monedas);
-        }
+        if (GameManager.Instance != null) GameManager.Instance.VerificarRecordMonedas(monedas);
 
         if (monedas >= 40)
         {
-            Debug.Log("�40 Monedas conseguidas! Nivel 2 Desbloqueado.");
+            Debug.Log("40 Monedas conseguidas! Has guanyat!");
             GestorXarxa.Instance.EnviarDades("VICTORIA|JO");
-            Debug.Log("Has guanyat la cursa!");
-            GameManager.Instance.DesbloquearSiguienteNivel(1);
+            if (GameManager.Instance != null) GameManager.Instance.DesbloquearSiguienteNivel(1);
         }
     }
 
     public void ActualizarTexto()
     {
-        if (textoMonedas != null)
-        {
-            textoMonedas.text = monedas.ToString();
-        }
+        if (textoMonedas != null) textoMonedas.text = monedas.ToString();
     }
 }
 
@@ -79,8 +83,13 @@ public class MonedaSimple : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            manager.SumarMoneda();
-            Destroy(gameObject);
+            ScriptPersonaje sp = other.GetComponent<ScriptPersonaje>();
+            if (sp != null && sp.esLocal)
+            {
+                manager.SumarMonedaLocal();
+                GestorXarxa.Instance.EnviarDades("COIN|" + transform.position.x + "|" + transform.position.y);
+                Destroy(gameObject);
+            }
         }
     }
 }

@@ -18,6 +18,8 @@ public class DragonFly : MonoBehaviour
     private bool moviendoDerecha = false;
     private Vector3 escalaOriginal;
     private float tiempo = 0f;
+    
+    public bool activo = false;
 
     void Start()
     {
@@ -26,12 +28,12 @@ public class DragonFly : MonoBehaviour
 
         moviendoDerecha = false;
         Girar(false);
-
-        tiempoProximoDisparo = Time.time + Random.Range(2f, 3f);
     }
 
     void Update()
     {
+        if (!activo) return;
+
         MoverDragon();
         DispararSiToca();
     }

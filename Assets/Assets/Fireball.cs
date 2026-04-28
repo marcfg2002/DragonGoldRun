@@ -8,12 +8,17 @@ public class Fireball : MonoBehaviour
 
     void Start()
     {
-        objetivo = GameObject.FindGameObjectWithTag("Player").transform;
-        if (objetivo != null)
+        ScriptPersonaje[] jugadores = FindObjectsOfType<ScriptPersonaje>();
+        foreach (ScriptPersonaje p in jugadores)
         {
-            direccion = (objetivo.position - transform.position).normalized;
+            if (p.esLocal)
+            {
+                objetivo = p.transform;
+                break;
+            }
         }
 
+        if (objetivo != null) direccion = (objetivo.position - transform.position).normalized;
         Destroy(gameObject, 5f);
     }
 
@@ -27,11 +32,10 @@ public class Fireball : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             ScriptPersonaje personaje = collision.GetComponent<ScriptPersonaje>();
-            if (personaje != null)
+            if (personaje != null && personaje.esLocal)
             {
                 personaje.Morir();
             }
-
             Destroy(gameObject);
         }
     }
