@@ -25,7 +25,6 @@ public class DragonFly : MonoBehaviour
     {
         escalaOriginal = transform.localScale * 0.8f;
         transform.localScale = escalaOriginal;
-
         moviendoDerecha = false;
         Girar(false);
     }
@@ -34,7 +33,11 @@ public class DragonFly : MonoBehaviour
     {
         if (!activo) return;
 
-        MoverDragon();
+        if (GestorXarxa.Instance != null && GestorXarxa.Instance.esServidor)
+        {
+            MoverDragon();
+        }
+        
         DispararSiToca();
     }
 
@@ -47,20 +50,13 @@ public class DragonFly : MonoBehaviour
         transform.Translate(Vector2.right * direccion * velocidad * Time.deltaTime);
         transform.position = new Vector3(transform.position.x, nuevaY, transform.position.z);
 
-        if (transform.position.x >= limiteDerecho && moviendoDerecha)
-        {
-            Girar(false);
-        }
-        else if (transform.position.x <= limiteIzquierdo && !moviendoDerecha)
-        {
-            Girar(true);
-        }
+        if (transform.position.x >= limiteDerecho && moviendoDerecha) Girar(false);
+        else if (transform.position.x <= limiteIzquierdo && !moviendoDerecha) Girar(true);
     }
 
     void Girar(bool haciaDerecha)
     {
         moviendoDerecha = haciaDerecha;
-
         Vector3 nuevaEscala = escalaOriginal;
         nuevaEscala.x = haciaDerecha ? -Mathf.Abs(escalaOriginal.x) : Mathf.Abs(escalaOriginal.x);
         transform.localScale = nuevaEscala;
@@ -70,16 +66,10 @@ public class DragonFly : MonoBehaviour
     {
         if (Time.time >= tiempoProximoDisparo)
         {
-            DispararFuego();
+            if (fireballPrefab != null && puntoDisparo != null)
+                Instantiate(fireballPrefab, puntoDisparo.position, Quaternion.identity);
+            
             tiempoProximoDisparo = Time.time + Random.Range(2f, 3f);
-        }
-    }
-
-    void DispararFuego()
-    {
-        if (fireballPrefab != null && puntoDisparo != null)
-        {
-            Instantiate(fireballPrefab, puntoDisparo.position, Quaternion.identity);
         }
     }
 }

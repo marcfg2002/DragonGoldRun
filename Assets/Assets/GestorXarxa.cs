@@ -11,7 +11,7 @@ public class GestorXarxa : MonoBehaviour
 
     NetworkDriver driver;
     NetworkConnection conexio;
-    bool esServidor = false;
+    public bool esServidor = false;
     bool estaConnectat = false;
 
     [Header("Interfície (UI)")]
@@ -38,7 +38,7 @@ public class GestorXarxa : MonoBehaviour
             driver.Listen();
             esServidor = true;
             InstanciarMeuJugador();
-            Debug.Log("Servidor Obert! Esperant rival...");
+            Debug.Log("Servidor Obert!");
             AmagarBotons(); 
         }
     }
@@ -53,7 +53,6 @@ public class GestorXarxa : MonoBehaviour
         var endpoint = NetworkEndpoint.Parse(ipNeta, port);
         conexio = driver.Connect(endpoint);
         esServidor = false;
-        Debug.Log("Intentant connectar a '" + ipNeta + "'...");
     }
 
     void AmagarBotons()
@@ -67,10 +66,8 @@ public class GestorXarxa : MonoBehaviour
     {
         MonedasManager mm = FindObjectOfType<MonedasManager>();
         if (mm != null) mm.Activar();
-
         GeneradorEnemigo ge = FindObjectOfType<GeneradorEnemigo>();
         if (ge != null) ge.Activar();
-
         DragonFly[] dragons = FindObjectsOfType<DragonFly>();
         foreach(DragonFly d in dragons) d.activo = true;
     }
@@ -87,7 +84,6 @@ public class GestorXarxa : MonoBehaviour
             {
                 conexio = c;
                 estaConnectat = true;
-                Debug.Log("RIVAL CONNECTAT!");
                 ActivarMundo();
             }
         }
@@ -98,7 +94,6 @@ public class GestorXarxa : MonoBehaviour
             if (cmd == NetworkEvent.Type.Connect)
             {
                 estaConnectat = true;
-                Debug.Log("Connectat amb èxit!");
                 if (!esServidor) 
                 {
                     InstanciarMeuJugador();
@@ -123,6 +118,20 @@ public class GestorXarxa : MonoBehaviour
                            meuPersonatge.GetComponent<SpriteRenderer>().flipX + "|" +
                            anim.GetFloat("Speed") + "|" + anim.GetBool("Grounded");
             EnviarDades(dades);
+
+            if (esServidor)
+            {
+                Enemigo e = FindObjectOfType<Enemigo>();
+                if (e != null) EnviarDades("ENEM|" + e.transform.position.x + "|" + e.transform.position.y);
+
+                DragonFly[] dragons = FindObjectsOfType<DragonFly>();
+                if (dragons.Length > 0)
+                {
+                    string msgDracs = "DRAGS";
+                    foreach(DragonFly d in dragons) msgDracs += "|" + d.transform.position.x + "|" + d.transform.position.y;
+                    EnviarDades(msgDracs);
+                }
+            }
         }
 
         if (jugadorRival != null)
@@ -176,25 +185,50 @@ public class GestorXarxa : MonoBehaviour
         }
         else if (d[0] == "COIN") 
         {
-            float x = float.Parse(d[1]);
-            float y = float.Parse(d[2]);
-            Vector2 posMonedaRival = new Vector2(x, y);
-
-            GameObject[] monedas = GameObject.FindGameObjectsWithTag("Moneda");
-            foreach (GameObject m in monedas)
+            Vector2 posMoneda = new Vector2(float.Parse(d[1]), float.Parse(d[2]));
+            foreach (GameObject m in GameObject.FindGameObjectsWithTag("Moneda"))
             {
-                if (Vector2.Distance(m.transform.position, posMonedaRival) < 1f)
+                if (Vector2.Distance(m.transform.position, posMoneda) < 1f) { Destroy(m); break; }
+            }
+        }
+        else if (d[0] == "VICTORIA") meuPersonatge.MorirDefinitivo();
+        
+        else if (d[0] == "DEAD") { if (jugadorRival != null) Destroy(jugadorRival); }
+        else if (d[0] == "HIT") { if (jugadorRival != null) StartCoroutine(ParpellejarRival()); }
+        else if (d[0] == "KILL_ENEM" && esServidor) 
+        { 
+            Enemigo e = FindObjectOfType<Enemigo>(); 
+            if (e != null) e.MorirPerXarxa(); 
+        }
+        else if (d[0] == "ENEM" && !esServidor)
+        {
+            Enemigo e = FindObjectOfType<Enemigo>();
+            if (e != null) e.transform.position = Vector3.Lerp(e.transform.position, new Vector3(float.Parse(d[1]), float.Parse(d[2]), 0), Time.deltaTime * 15f);
+        }
+        else if (d[0] == "DRAGS" && !esServidor)
+        {
+            DragonFly[] dragons = FindObjectsOfType<DragonFly>();
+            int idx = 1;
+            for (int i = 0; i < dragons.Length; i++)
+            {
+                if (idx + 1 < d.Length)
                 {
-                    Destroy(m);
-                    break; 
+                    dragons[i].transform.position = Vector3.Lerp(dragons[i].transform.position, new Vector3(float.Parse(d[idx]), float.Parse(d[idx+1]), 0), Time.deltaTime * 15f);
+                    idx += 2;
                 }
             }
         }
-        else if (d[0] == "VICTORIA")
+    }
+
+    System.Collections.IEnumerator ParpellejarRival()
+    {
+        SpriteRenderer sr = jugadorRival.GetComponent<SpriteRenderer>();
+        for (int i = 0; i < 5; i++)
         {
-            Debug.Log("Has perdut la cursa! El rival ha arribat a 40!");
-            meuPersonatge.MorirDefinitivo();
+            if (sr != null) sr.enabled = !sr.enabled;
+            yield return new WaitForSeconds(0.1f);
         }
+        if (sr != null) sr.enabled = true;
     }
 
     void OnDestroy() { if (driver.IsCreated) driver.Dispose(); }

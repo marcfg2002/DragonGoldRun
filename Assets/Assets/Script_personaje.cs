@@ -81,11 +81,18 @@ public class ScriptPersonaje : MonoBehaviour
 
         monedasManager = FindObjectOfType<MonedasManager>();
         rb.freezeRotation = true;
-
         if (capaSuelo == 0) capaSuelo = LayerMask.GetMask("Ground");
 
         vidasActuales = vidasMaximas;
         puntoReaparicion = transform.position;
+
+        if (textoVidas == null)
+        {
+            GameObject txtObj = GameObject.Find("TextoVidas");
+            if (txtObj != null) textoVidas = txtObj.GetComponent<TMP_Text>();
+        }
+
+        
 
         ActualizarTextoVidas();
 
@@ -97,7 +104,6 @@ public class ScriptPersonaje : MonoBehaviour
             DragonFly df = FindObjectOfType<DragonFly>();
             if (df != null) dragonSceneObject = df.gameObject;
         }
-
         if (GameManager.Instance != null && GameManager.Instance.cargandoDesdeSave)
         {
             CargarJugador();
@@ -230,17 +236,13 @@ public class ScriptPersonaje : MonoBehaviour
         vidasActuales--;
         ActualizarTextoVidas();
         alfaFlash = 0.8f;
+        
+        GestorXarxa.Instance.EnviarDades("HIT");
 
         if (CameraShake.Instance != null) CameraShake.Instance.Sacudir(0.3f, 0.4f);
 
-        if (vidasActuales <= 0)
-        {
-            MorirDefinitivo();
-        }
-        else
-        {
-            StartCoroutine(RutinaRetroceso(enemigoTransform, colliderEnemigo));
-        }
+        if (vidasActuales <= 0) MorirDefinitivo();
+        else StartCoroutine(RutinaRetroceso(enemigoTransform, colliderEnemigo));
     }
 
     IEnumerator RutinaRetroceso(Transform enemigo, Collider2D colEnemigo)
@@ -272,6 +274,7 @@ public class ScriptPersonaje : MonoBehaviour
     {
         vidasActuales = 0;
         ActualizarTextoVidas();
+        GestorXarxa.Instance.EnviarDades("DEAD"); 
         StartCoroutine(HandleGameOver());
     }
 

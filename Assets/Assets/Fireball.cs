@@ -3,22 +3,11 @@ using UnityEngine;
 public class Fireball : MonoBehaviour
 {
     public float velocidad = 5f;
-    private Transform objetivo;
     private Vector3 direccion;
 
     void Start()
     {
-        ScriptPersonaje[] jugadores = FindObjectsOfType<ScriptPersonaje>();
-        foreach (ScriptPersonaje p in jugadores)
-        {
-            if (p.esLocal)
-            {
-                objetivo = p.transform;
-                break;
-            }
-        }
-
-        if (objetivo != null) direccion = (objetivo.position - transform.position).normalized;
+        direccion = new Vector3(Random.Range(-0.5f, 0.5f), -1f, 0).normalized;
         Destroy(gameObject, 5f);
     }
 
