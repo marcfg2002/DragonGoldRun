@@ -288,12 +288,33 @@ public class ScriptPersonaje : MonoBehaviour
     {
         controlBloqueado = true;
         rb.velocity = Vector2.zero;
-        StartCoroutine(HandleGameOver("HAS GUANYAT"));
+        
+        if (textoGameOver != null)
+        {
+            textoGameOver.text = "HAS GUANYAT!";
+            textoGameOver.gameObject.SetActive(true);
+        }
+        
+        Time.timeScale = 0f; 
     }
 
     public void Morir()
     {
         if (!esInvulnerable) RecibirDaño(transform, null);
+    }
+
+    private IEnumerator HandleGameOver(string missatge)
+    {
+        if (textoGameOver != null)
+        {
+            textoGameOver.text = missatge;
+            textoGameOver.gameObject.SetActive(true);
+        }
+        Time.timeScale = 0f;
+        
+        yield return new WaitForSecondsRealtime(tiempoEsperaGameOver);
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
     }
 
     private IEnumerator HandleGameOver(string missatge)
