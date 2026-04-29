@@ -144,7 +144,8 @@ public class GestorXarxa : MonoBehaviour
                 Enemigo e = FindObjectOfType<Enemigo>();
                 if (e != null) 
                 {
-                    EnviarDades("ENEM|" + e.transform.position.x + "|" + e.transform.position.y);
+                    bool flipE = e.GetComponent<SpriteRenderer>().flipX;
+                    EnviarDades("ENEM|" + e.transform.position.x + "|" + e.transform.position.y + "|" + flipE);
                 }
                 
                 DragonFly[] dragons = FindObjectsOfType<DragonFly>();
@@ -153,7 +154,7 @@ public class GestorXarxa : MonoBehaviour
                     string msgDracs = "DRAGS";
                     foreach(DragonFly d in dragons) 
                     {
-                        msgDracs += "|" + d.transform.position.x + "|" + d.transform.position.y;
+                        msgDracs += "|" + d.transform.position.x + "|" + d.transform.position.y + "|" + d.transform.localScale.x;
                     }
                     EnviarDades(msgDracs);
                 }
@@ -224,7 +225,12 @@ public class GestorXarxa : MonoBehaviour
         }
         else if (d[0] == "ENEM" && !esServidor) 
         {
-            SincronitzarEnemic(d);
+            Enemigo e = FindObjectOfType<Enemigo>();
+            if (e != null) 
+            {
+                e.posDestiXarxa = new Vector3(float.Parse(d[1]), float.Parse(d[2]), 0);
+                e.GetComponent<SpriteRenderer>().flipX = bool.Parse(d[3]);
+            }
         }
         else if (d[0] == "DRAGS" && !esServidor)
         {
@@ -232,10 +238,11 @@ public class GestorXarxa : MonoBehaviour
             int idx = 1;
             for (int i = 0; i < dragons.Length; i++)
             {
-                if (idx + 1 < d.Length)
+                if (idx + 2 < d.Length)
                 {
-                    dragons[i].transform.position = Vector3.Lerp(dragons[i].transform.position, new Vector3(float.Parse(d[idx]), float.Parse(d[idx+1]), 0), Time.deltaTime * 15f);
-                    idx += 2;
+                    dragons[i].posDestiXarxa = new Vector3(float.Parse(d[idx]), float.Parse(d[idx+1]), 0);
+                    dragons[i].scaleXDesti = float.Parse(d[idx+2]);
+                    idx += 3;
                 }
             }
         }
@@ -263,15 +270,6 @@ public class GestorXarxa : MonoBehaviour
             yield return new WaitForSeconds(0.1f); 
         }
         sr.enabled = true;
-    }
-
-    void SincronitzarEnemic(string[] d) 
-    {
-        Enemigo e = FindObjectOfType<Enemigo>();
-        if (e != null) 
-        {
-            e.transform.position = new Vector3(float.Parse(d[1]), float.Parse(d[2]), 0);
-        }
     }
 
     void DestruirMoneda(Vector2 p) 

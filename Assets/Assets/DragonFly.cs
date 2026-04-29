@@ -20,6 +20,9 @@ public class DragonFly : MonoBehaviour
     private float tiempo = 0f;
     
     public bool activo = false;
+    
+    [HideInInspector] public Vector3 posDestiXarxa;
+    [HideInInspector] public float scaleXDesti;
 
     void Start()
     {
@@ -27,15 +30,32 @@ public class DragonFly : MonoBehaviour
         transform.localScale = escalaOriginal;
         moviendoDerecha = false;
         Girar(false);
+        
+        posDestiXarxa = transform.position;
+        scaleXDesti = transform.localScale.x;
     }
 
     void Update()
     {
         if (!activo) return;
 
-        if (GestorXarxa.Instance != null && GestorXarxa.Instance.esServidor)
+        if (GestorXarxa.Instance != null)
         {
-            MoverDragon();
+            if (GestorXarxa.Instance.esServidor)
+            {
+                MoverDragon(); 
+            }
+            else
+            {
+                transform.position = Vector3.Lerp(transform.position, posDestiXarxa, Time.deltaTime * 15f);
+                Vector3 s = transform.localScale;
+                s.x = scaleXDesti;
+                transform.localScale = s;
+            }
+        }
+        else 
+        {
+            MoverDragon(); 
         }
         
         DispararSiToca();

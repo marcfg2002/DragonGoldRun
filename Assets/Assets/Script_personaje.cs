@@ -92,6 +92,12 @@ public class ScriptPersonaje : MonoBehaviour
             if (txtObj != null) textoVidas = txtObj.GetComponent<TMP_Text>();
         }
 
+        if (textoGameOver == null)
+        {
+            GameObject goTxt = GameObject.Find("TextoGameOver");
+            if (goTxt != null) textoGameOver = goTxt.GetComponent<TMP_Text>();
+        }
+
         ActualizarTextoVidas();
 
         if (textoGameOver != null) textoGameOver.gameObject.SetActive(false);
@@ -282,7 +288,7 @@ public class ScriptPersonaje : MonoBehaviour
     {
         controlBloqueado = true;
         rb.velocity = Vector2.zero;
-        StartCoroutine(HandleGameOver("¡VICTÒRIA!"));
+        StartCoroutine(HandleGameOver("HAS GUANYAT"));
     }
 
     public void Morir()

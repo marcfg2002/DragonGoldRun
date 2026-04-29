@@ -14,6 +14,7 @@ public class Enemigo : MonoBehaviour
     private bool estaMuerto = false;
 
     [HideInInspector] public GeneradorEnemigo spawner;
+    [HideInInspector] public Vector3 posDestiXarxa;
 
     void Start()
     {
@@ -23,13 +24,19 @@ public class Enemigo : MonoBehaviour
 
         if (rb != null) rb.freezeRotation = true;
         if (spawner == null) spawner = FindObjectOfType<GeneradorEnemigo>();
+        
+        posDestiXarxa = transform.position;
     }
 
     void FixedUpdate()
     {
         if (rb == null || estaMuerto) return;
 
-        if (GestorXarxa.Instance != null && !GestorXarxa.Instance.esServidor) return;
+        if (GestorXarxa.Instance != null && !GestorXarxa.Instance.esServidor) 
+        {
+            transform.position = Vector3.Lerp(transform.position, posDestiXarxa, Time.deltaTime * 15f);
+            return;
+        }
 
         if (moviendoDerecha)
         {
@@ -91,7 +98,8 @@ public class Enemigo : MonoBehaviour
         if (col != null) col.enabled = false;
         if (rb != null) rb.simulated = false;
 
-        transform.localScale = new Vector3(transform.localScale.x * 1.2f, transform.localScale.y * 0.2f, transform.localScale.z);
+        Vector3 escalaOriginal = transform.localScale;
+        transform.localScale = new Vector3(escalaOriginal.x * 1.2f, escalaOriginal.y * 0.2f, escalaOriginal.z);
         if (CameraShake.Instance != null) CameraShake.Instance.Sacudir(0.1f, 0.2f);
 
         yield return new WaitForSeconds(0.2f);
