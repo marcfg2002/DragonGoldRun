@@ -135,7 +135,7 @@ GameObject:
   - component: {fileID: 85423909}
   - component: {fileID: 85423908}
   m_Layer: 0
-  m_Name: Vidas
+  m_Name: TextoVidas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2317,6 +2317,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   port: 5701
+  esServidor: 0
   botoHost: {fileID: 553244427}
   botoClient: {fileID: 958439842}
   inputIP: {fileID: 2138757240}

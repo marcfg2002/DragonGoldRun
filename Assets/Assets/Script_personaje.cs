@@ -92,8 +92,6 @@ public class ScriptPersonaje : MonoBehaviour
             if (txtObj != null) textoVidas = txtObj.GetComponent<TMP_Text>();
         }
 
-        
-
         ActualizarTextoVidas();
 
         if (textoGameOver != null) textoGameOver.gameObject.SetActive(false);
@@ -237,7 +235,7 @@ public class ScriptPersonaje : MonoBehaviour
         ActualizarTextoVidas();
         alfaFlash = 0.8f;
         
-        GestorXarxa.Instance.EnviarDades("HIT");
+        if (GestorXarxa.Instance != null) GestorXarxa.Instance.EnviarDades("HIT");
 
         if (CameraShake.Instance != null) CameraShake.Instance.Sacudir(0.3f, 0.4f);
 
@@ -253,7 +251,7 @@ public class ScriptPersonaje : MonoBehaviour
         if (colEnemigo != null) Physics2D.IgnoreCollision(col, colEnemigo, true);
 
         rb.velocity = Vector2.zero;
-        float dirX = (transform.position.x < enemigo.position.x) ? -1 : 1;
+        float dirX = (enemigo != null && transform.position.x < enemigo.position.x) ? -1 : 1;
         rb.AddForce(new Vector2(dirX * 8f, 6f), ForceMode2D.Impulse);
 
         for (int i = 0; i < 10; i++)
@@ -274,8 +272,17 @@ public class ScriptPersonaje : MonoBehaviour
     {
         vidasActuales = 0;
         ActualizarTextoVidas();
-        GestorXarxa.Instance.EnviarDades("DEAD"); 
-        StartCoroutine(HandleGameOver());
+        
+        if (GestorXarxa.Instance != null) GestorXarxa.Instance.EnviarDades("RIVAL_MORT");
+        
+        StartCoroutine(HandleGameOver("GAME OVER"));
+    }
+
+    public void Guanyar()
+    {
+        controlBloqueado = true;
+        rb.velocity = Vector2.zero;
+        StartCoroutine(HandleGameOver("¡VICTÒRIA!"));
     }
 
     public void Morir()
@@ -283,11 +290,11 @@ public class ScriptPersonaje : MonoBehaviour
         if (!esInvulnerable) RecibirDaño(transform, null);
     }
 
-    private IEnumerator HandleGameOver()
+    private IEnumerator HandleGameOver(string missatge)
     {
         if (textoGameOver != null)
         {
-            textoGameOver.text = "GAME OVER";
+            textoGameOver.text = missatge;
             textoGameOver.gameObject.SetActive(true);
         }
         Time.timeScale = 0f;
